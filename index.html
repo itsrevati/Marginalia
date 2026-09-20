@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marginalia — daily freewriting</title>
+  <meta name="description" content="A 10-minute daily freewriting practice with topic prompts and voice analysis, running entirely in your browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">§</span>
+        <span class="brand-name">Marginalia</span>
+      </div>
+      <nav class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab is-active" data-tab="write" role="tab" aria-selected="true">Write</button>
+        <button class="tab" data-tab="archive" role="tab" aria-selected="false">Archive</button>
+        <button class="tab" data-tab="lab" role="tab" aria-selected="false">Voice Lab</button>
+        <button class="tab" data-tab="settings" role="tab" aria-selected="false">Settings</button>
+      </nav>
+      <div class="streak" id="streakBadge" title="Consecutive days written"></div>
+    </header>
+
+    <main>
+      <!-- WRITE -->
+      <section id="panel-write" class="panel is-active">
+        <div class="write-shell">
+          <div class="topic-card" id="topicCard">
+            <div class="topic-meta">
+              <span class="topic-mode" id="topicModeLabel">Today's topic</span>
+              <button class="ghost-btn small" id="newTopicBtn" type="button">New topic</button>
+            </div>
+            <p class="topic-text" id="topicText">Loading a topic…</p>
+            <p class="challenge-note" id="challengeNote" hidden></p>
+          </div>
+
+          <div class="rules" id="rulesBanner">
+            No looking anything up. Recollection, speculation, or invention only — that's the whole exercise.
+          </div>
+
+          <div class="timer-row">
+            <div class="timer-display" id="timerDisplay">10:00</div>
+            <div class="timer-controls">
+              <button class="primary-btn" id="startPauseBtn" type="button">Start</button>
+              <button class="ghost-btn" id="resetBtn" type="button">Reset</button>
+            </div>
+            <div class="word-count" id="wordCount">0 words</div>
+          </div>
+
+          <textarea
+            id="writeArea"
+            class="write-area"
+            placeholder="Start typing once the timer's running…"
+            spellcheck="false"
+            autocomplete="off"
+          ></textarea>
+
+          <div class="write-footer">
+            <span class="save-hint" id="saveHint"></span>
+            <button class="primary-btn" id="saveEntryBtn" type="button" disabled>Save today's entry</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARCHIVE -->
+      <section id="panel-archive" class="panel">
+        <div class="panel-header">
+          <h1>Archive</h1>
+          <p class="panel-sub" id="archiveSummary"></p>
+        </div>
+        <div class="entry-list" id="entryList"></div>
+      </section>
+
+      <!-- VOICE LAB -->
+      <section id="panel-lab" class="panel">
+        <div class="panel-header">
+          <h1>Voice Lab</h1>
+          <p class="panel-sub">A read on your writing, drawn from your own entries — not a style guide, a mirror.</p>
+        </div>
+
+        <div class="lab-actions">
+          <button class="primary-btn" id="runAnalysisBtn" type="button">Run analysis</button>
+          <span class="lab-hint" id="labHint"></span>
+        </div>
+
+        <div class="stat-row" id="localStats"></div>
+
+        <div id="analysisDashboard" class="analysis-grid"></div>
+
+        <div class="lab-history" id="analysisHistory"></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="panel-settings" class="panel">
+        <div class="panel-header">
+          <h1>Settings</h1>
+        </div>
+
+        <div class="settings-form">
+          <label class="field">
+            <span class="field-label">Anthropic API key</span>
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-…" autocomplete="off" />
+            <span class="field-hint">
+              Stored only in this browser's local storage — never written to any file, never sent anywhere but api.anthropic.com.
+              Get a key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>.
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Model</span>
+            <select id="modelSelect">
+              <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — fastest, cheapest (recommended)</option>
+              <option value="claude-sonnet-5">Claude Sonnet 5 — balanced</option>
+              <option value="claude-opus-5">Claude Opus 5 — most capable, priciest</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Writing session length (minutes)</span>
+            <input type="number" id="minutesInput" min="1" max="60" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Remind me to run Voice Lab every</span>
+            <div class="inline-field">
+              <input type="number" id="analysisFreqInput" min="1" max="60" />
+              <span>entries</span>
+            </div>
+          </label>
+
+          <div class="settings-actions">
+            <button class="primary-btn" id="saveSettingsBtn" type="button">Save settings</button>
+            <span class="save-hint" id="settingsSaveHint"></span>
+          </div>
+
+          <hr />
+
+          <div class="data-actions">
+            <h2>Your data</h2>
+            <p class="field-hint">
+              Everything lives in this browser only — nothing syncs across devices. Export a backup before clearing
+              browser data, switching browsers, or moving to a new machine.
+            </p>
+            <div class="data-buttons">
+              <button class="ghost-btn" id="exportBtn" type="button">Export entries (.json)</button>
+              <label class="ghost-btn file-btn">
+                Import entries
+                <input type="file" id="importInput" accept="application/json" hidden />
+              </label>
+              <button class="danger-btn" id="clearBtn" type="button">Clear all entries</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/topicBank.js"></script>
+  <script src="js/topics.js"></script>
+  <script src="js/analysisConfig.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
